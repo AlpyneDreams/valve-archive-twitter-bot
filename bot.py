@@ -47,11 +47,10 @@ def main():
                       consumer_secret=CONSUMER_SECRET,
                       access_token_key=ACCESS_TOKEN_KEY,
                       access_token_secret=ACCESS_TOKEN_SECRET)
-    status = api.PostUpdate(
+    api.PostUpdate(
         'Found in folder: ' + pic_dir_url,
         media=open(pic_fullpath, 'rb')
     )
-    print(status)
 
 
 if __name__ == '__main__':
