@@ -3,6 +3,7 @@ import twitter
 import dotenv
 import json
 import random
+import sys
 from pathlib import Path
 
 dotenv.load_dotenv()
@@ -15,11 +16,21 @@ ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET')
 
 
 def reset_queue():
+    print('=== Building queue.json ===')
     queue = []
     extensions = ('jpg', 'jpeg', 'png', 'gif')
     for ext in extensions:
         queue.extend(str(p.relative_to(ARCHIVE_PATH)) for p in Path(ARCHIVE_PATH).glob('**/*.' + ext))
     random.shuffle(queue)
+
+    bad_files = []
+    for file in queue:
+        if file.startswith('.'):
+            bad_files.append(file)
+    for file in bad_files:
+        queue.remove(file)
+
+    print('Built queue.json. Total ' + str(len(queue)) + ' files, skipped ' + str(len(bad_files)) + ' files')
     return queue
 
 
@@ -27,7 +38,7 @@ def next_pic():
     try:
         with open('queue.json', 'r') as queue_handle:
             queue = json.load(queue_handle)
-            if len(queue) == 0:
+            if len(queue) == 0 or '--reset' in sys.argv:
                 queue = reset_queue()
     except IOError:
         queue = reset_queue()
@@ -35,6 +46,10 @@ def next_pic():
     queue = queue[1:]
     with open('queue.json', 'w') as queue_handle:
         json.dump(queue, queue_handle)
+
+    if '--reset' in sys.argv:
+        exit()
+
     return Path(pic)
 
 
@@ -47,6 +62,7 @@ def main():
                       consumer_secret=CONSUMER_SECRET,
                       access_token_key=ACCESS_TOKEN_KEY,
                       access_token_secret=ACCESS_TOKEN_SECRET)
+    print('Found in folder: ' + pic_dir_url + '\n' + str(pic_fullpath))
     api.PostUpdate(
         'Found in folder: ' + pic_dir_url,
         media=open(pic_fullpath, 'rb')
