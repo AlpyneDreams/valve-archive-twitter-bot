@@ -64,7 +64,8 @@ def main():
                       access_token_secret=ACCESS_TOKEN_SECRET)
     print('Found in folder: ' + pic_dir_url + '\n' + str(pic_fullpath))
     api.PostUpdate(
-        'Found in folder: ' + pic_dir_url,
+        str(pic_path) + '\n'
+        + 'Found in folder: ' + pic_dir_url,
         media=open(str(pic_fullpath), 'rb')
     )
 
