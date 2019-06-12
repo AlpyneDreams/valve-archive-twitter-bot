@@ -65,7 +65,7 @@ def main():
     print('Found in folder: ' + pic_dir_url + '\n' + str(pic_fullpath))
     api.PostUpdate(
         'Found in folder: ' + pic_dir_url,
-        media=open(pic_fullpath, 'rb')
+        media=open(str(pic_fullpath), 'rb')
     )
 
 
