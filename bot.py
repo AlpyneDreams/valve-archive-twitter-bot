@@ -14,9 +14,29 @@ CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
 ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
 ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET')
 
+def read_history():
+    try:
+        with open('history.json', 'r') as history_handle:
+            history = json.load(history_handle)
+    except IOError:
+        history = []
+    
+    return history
+
+def write_history(history):
+    with open('history.json', 'w') as history_handle:
+        json.dump(history, history_handle)
+
+def write_queue(queue):
+    with open('queue.json', 'w') as queue_handle:
+            json.dump(queue, queue_handle)
+
 
 def reset_queue():
     print('=== Building queue.json ===')
+    history = read_history()
+    print('History: ' + str(len(history)))
+
     queue = []
     extensions = ('jpg', 'jpeg', 'png', 'gif')
     for ext in extensions:
@@ -30,9 +50,23 @@ def reset_queue():
     for file in bad_files:
         queue.remove(file)
 
-    print('Built queue.json. Total ' + str(len(queue)) + ' files, skipped ' + str(len(bad_files)) + ' files')
-    return queue
+    queue = [file.replace('\\', '/') for file in queue]
 
+    base_count = len(queue)
+
+    print('Built queue.json. Total ' + str(len(queue)) + ' files, skipped ' + str(len(bad_files)) + ' files')
+
+    for file in history:
+        if file in queue:
+            queue.remove(file)
+
+    print('With history, reduced queue by ' + str(base_count - len(queue)) + ' to ' + str(len(queue)) + ' files.')
+
+    if '--reset' in sys.argv:
+        write_queue(queue)
+        exit()
+
+    return queue
 
 def next_pic():
     try:
@@ -42,13 +76,18 @@ def next_pic():
                 queue = reset_queue()
     except IOError:
         queue = reset_queue()
-    pic = queue[0]
-    queue = queue[1:]
-    with open('queue.json', 'w') as queue_handle:
-        json.dump(queue, queue_handle)
 
-    if '--reset' in sys.argv:
-        exit()
+    history = read_history()
+
+    pic = queue[0]
+    # snip off the end of the queue
+    queue = queue[1:]
+    
+    write_queue(queue)
+
+    # write to history
+    history.append(pic)
+    write_history()
 
     return Path(pic)
 
@@ -62,7 +101,7 @@ def main():
                       consumer_secret=CONSUMER_SECRET,
                       access_token_key=ACCESS_TOKEN_KEY,
                       access_token_secret=ACCESS_TOKEN_SECRET)
-    print('Found in folder: ' + pic_dir_url + '\n' + str(pic_fullpath))
+    print('Found in folder: ' + pic_dir_url + '\n' + str(pic_path))
     api.PostUpdate(
         str(pic_path) + '\n'
         + 'Found in folder: ' + pic_dir_url,
