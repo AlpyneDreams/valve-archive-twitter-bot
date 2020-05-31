@@ -25,7 +25,7 @@ def read_history():
 
 def write_history(history):
     with open('history.json', 'w') as history_handle:
-        json.dump(history, history_handle)
+        json.dump(history, history_handle, indent='\t')
 
 def write_queue(queue):
     with open('queue.json', 'w') as queue_handle:
