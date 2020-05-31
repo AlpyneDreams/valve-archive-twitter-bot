@@ -87,7 +87,7 @@ def next_pic():
 
     # write to history
     history.append(pic)
-    write_history()
+    write_history(history)
 
     return Path(pic)
 
